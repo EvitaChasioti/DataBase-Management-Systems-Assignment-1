@@ -145,7 +145,29 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
   return 0;
 }
 
-int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){    
-    return -1;
-}
+int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){ 
+  printf("Getting all entries...\n");
+  BF_Block* block;
+  BF_Block_Init(&block);
+  CALL_BF(BF_GetBlock(file_desc, 1, block));
 
+  void* records_data;
+  void* block_info_data;
+
+  records_data = BF_Block_GetData(block);
+  block_info_data = records_data + hp_info->bytes_size;
+  HP_block_info* block_info = block_info_data;
+
+  while (block_info->next != NULL) {
+    printf("%d\n", block_info->block_id);
+
+    records_data = BF_Block_GetData(block);
+    block_info_data = records_data + hp_info->bytes_size;
+    HP_block_info* block_info = block_info_data;
+
+    CALL_BF(BF_UnpinBlock(block));
+    BF_Block* block;
+    BF_Block_Init(&block);
+    block = block_info->next;
+  }
+}
