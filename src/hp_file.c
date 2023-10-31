@@ -80,6 +80,7 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     rec[block_info->num_of_records++] = record;
 
     printf("%s ", rec[block_info->num_of_records-1].name);
+    printf("%d ", rec[block_info->num_of_records-1].id);
     printf("%d ", block_info->block_id);
     printf("%d\n", block_info->num_of_records);
 
@@ -105,7 +106,9 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
       
 
       printf("%s ", rec[block_info->num_of_records].name);
+      printf("%d ", rec[block_info->num_of_records].id);
       printf("%d ", block_info->block_id);
+
       if (block_info->num_of_records < hp_info->capacity)
         block_info->num_of_records++;
       printf("%d\n", block_info->num_of_records);
@@ -117,7 +120,7 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
       printf("Creating a new Block with id = %d... ", hp_info->last_block_id);
       BF_Block* new_block;
       BF_Block_Init(&new_block);
-
+      printf("%p\n", new_block);
       CALL_BF(BF_AllocateBlock(file_desc, new_block));
       records_data = BF_Block_GetData(new_block);
       block_info_data = records_data + hp_info->bytes_size;
@@ -131,8 +134,11 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
       Record* rec = records_data;
       rec[block_info2->num_of_records++] = record;
       block_info->next = new_block;
-
+      
+      printf("%p =?=", block_info->next);
+      printf("%p\n", new_block);
       printf("%s ", rec[block_info2->num_of_records-1].name);
+      printf("%d ", rec[block_info2->num_of_records-1].id);
       printf("%d ", block_info2->block_id);
       printf("%d\n", block_info2->num_of_records);
 
@@ -146,28 +152,28 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
 }
 
 int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){ 
-  printf("Getting all entries...\n");
   BF_Block* block;
   BF_Block_Init(&block);
-  CALL_BF(BF_GetBlock(file_desc, 1, block));
-
   void* records_data;
   void* block_info_data;
-
-  records_data = BF_Block_GetData(block);
-  block_info_data = records_data + hp_info->bytes_size;
-  HP_block_info* block_info = block_info_data;
-
-  while (block_info->next != NULL) {
-    printf("%d\n", block_info->block_id);
-
+  int count=0;
+  int count2=0;
+  for (int id = 1; id <= hp_info->last_block_id; id++) {
+    CALL_BF(BF_GetBlock(file_desc, id, block));
     records_data = BF_Block_GetData(block);
     block_info_data = records_data + hp_info->bytes_size;
     HP_block_info* block_info = block_info_data;
-
-    CALL_BF(BF_UnpinBlock(block));
-    BF_Block* block;
-    BF_Block_Init(&block);
-    block = block_info->next;
+    Record* rec = records_data;
+    for (int i = 0; i < block_info->num_of_records; i++) {
+      if(rec[i].id==value){
+        printf("%s %s %s\n",rec[i].name, rec[i].surname, rec[i].city  );
+        count2+=count;
+      }
+    }
+    printf("Changing block...\n");
+    count++;
   }
+
+  printf("%d  %d\n", count, count2);
+  return 0;
 }
